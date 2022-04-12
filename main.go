@@ -169,10 +169,15 @@ func server() {
 	r.Use(location.Default())
 
 	r.LoadHTMLGlob("./views/*")
+
 	r.GET("/", func(c *gin.Context) {
+		hostname := location.Get(c).String()
+		if c.Request.Header.Get("X-Forwarded-Host") != "" {
+			hostname = c.Request.Header.Get("X-Forwarded-Host")
+		}
 		c.HTML(http.StatusOK, "index.tmpl", gin.H{
 			"id":       id,
-			"hostname": location.Get(c).String(),
+			"hostname": hostname,
 		})
 	})
 
