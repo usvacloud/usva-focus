@@ -1,0 +1,28 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: usvad-fiesta
+spec:
+  selector:
+    matchLabels:
+      app: usvad-fiesta
+  template:
+    metadata:
+      labels:
+        app: usvad-fiesta
+    spec:
+      containers:
+        - name: usvad-fiesta
+          image: mattipaksula/usvad-fiesta
+          imagePullPolicy: Always
+          resources:
+            requests:
+              cpu: "0.1"
+              memory: 128Mi
+            limits:
+              cpu: "1"
+              memory: 128Mi
+          env:
+            - name: USVA_ADDRESS
+              value: fiesta.usva.io

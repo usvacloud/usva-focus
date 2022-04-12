@@ -1,0 +1,8 @@
+Dockerfile
+Dockerfile.dev
+docker-compose.yml
+.git
+k8s
+bin
+dump.rdb
+README.md

@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+case $1 in
+  recreate)
+    docker network create frontend || true
+    docker-compose up -d nginx-proxy
+
+    while true; do
+      docker-compose up --build --force-recreate --timeout 0 usvadev || true
+      sleep 0.5
+    done
+  ;;
+  shell)
+    while true; do
+      docker-compose exec usvad bash
+    done
+  ;;
+  scale)
+    docker-compose up -d --scale usvadev=$2 usvadev
+  ;;
+  release)
+    docker buildx bake --push usvad
+  ;;
+esac

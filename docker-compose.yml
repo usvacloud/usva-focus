@@ -1,0 +1,38 @@
+version: '3'
+
+services:
+  nginx-proxy:
+    image: mesudip/nginx-proxy
+    ports:
+      - 80:80
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - frontend
+  usvadev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    volumes:
+      - ./:/app
+    environment:
+      - VIRTUAL_HOST=fiesta.localtest.me
+      - USVA_SEEDS=fiesta.localtest.me
+    networks:
+      - frontend
+    extra_hosts:
+      - fiesta.localtest.me:192.168.65.2
+
+  usvad:
+    build:
+      context: .
+      x-bake:
+        tags:
+          - mattipaksula/usvad-fiesta
+        platforms:
+          - linux/amd64
+          - linux/arm64
+
+networks:
+  frontend:
+    name: frontend
