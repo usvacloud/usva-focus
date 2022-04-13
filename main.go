@@ -108,6 +108,8 @@ func (p Peer) Delete(ctx context.Context) error {
 var rdb redis.Client
 var id string
 
+var port string
+
 func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -118,7 +120,14 @@ func main() {
 	rdb = *redis.NewClient(&redis.Options{})
 	rdb.FlushAll(ctx)
 
-	s, err := bonjour.Register("usvad sierra "+id, "_usva._tcp", "", 8080, []string{"txtv=1", "app=usvad-sierra-" + id}, nil)
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+
+	portInt, _ := strconv.Atoi(port)
+
+	s, err := bonjour.Register("usvad sierra "+id, "_usva._tcp", "", portInt, []string{"txtv=1", "app=usvad-sierra-" + id}, nil)
 	handler := make(chan os.Signal, 1)
 	signal.Notify(handler, os.Interrupt)
 	go func() {
@@ -425,9 +434,5 @@ func server() {
 		})
 	})
 
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080"
-	}
 	r.Run("0.0.0.0:" + port)
 }
