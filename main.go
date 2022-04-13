@@ -15,6 +15,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis/v8"
 	"github.com/google/uuid"
+	"github.com/oleksandr/bonjour"
 	"golang.org/x/net/context"
 )
 
@@ -116,6 +117,13 @@ func main() {
 	rdb = *redis.NewClient(&redis.Options{})
 	rdb.FlushAll(ctx)
 
+	s, err := bonjour.Register("usvad-sierra", "_usva._tcp", "", 8080, []string{"txtv=1", "app=usvad-sierra"}, nil)
+	defer s.Shutdown()
+
+	if err != nil {
+		log.Fatalln(err.Error())
+	}
+
 	go server()
 	time.Sleep(1 * time.Second)
 	go discoverer(ctx)
@@ -212,6 +220,26 @@ func discoverer(ctx context.Context) {
 	seeds := strings.Split(seedString, ",")
 
 	for {
+		resolver, err := bonjour.NewResolver(nil)
+		if err != nil {
+			log.Println("Failed to initialize resolver:", err.Error())
+			os.Exit(1)
+		}
+
+		results := make(chan *bonjour.ServiceEntry)
+
+		go func(results chan *bonjour.ServiceEntry) {
+			for e := range results {
+				//log.Printf(e.Instance, e.Service, e.AddrIPv4, e.Port, e.ServiceRecord, e.Text)
+				seeds = append(seeds, e.AddrIPv4.String()+":"+strconv.Itoa(e.Port))
+			}
+		}(results)
+
+		err = resolver.Browse("_usva._tcp", "local.", results)
+		if err != nil {
+			log.Println("Failed to browse:", err.Error())
+		}
+
 		for _, address := range candidates(ctx) {
 			get := rdb.Get(ctx, "peer:by:"+address)
 			if err := get.Err(); err == nil {
