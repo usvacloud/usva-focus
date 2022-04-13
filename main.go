@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"os/signal"
 	"strconv"
 	"strings"
 	"time"
@@ -117,8 +118,18 @@ func main() {
 	rdb = *redis.NewClient(&redis.Options{})
 	rdb.FlushAll(ctx)
 
-	s, err := bonjour.Register("usvad-sierra", "_usva._tcp", "", 8080, []string{"txtv=1", "app=usvad-sierra"}, nil)
-	defer s.Shutdown()
+	s, err := bonjour.Register("usvad sierra", "_usva._tcp", "", 8080, []string{"txtv=1", "app=usvad-sierra"}, nil)
+	handler := make(chan os.Signal, 1)
+	signal.Notify(handler, os.Interrupt)
+	go func() {
+		for sig := range handler {
+			if sig == os.Interrupt {
+				s.Shutdown()
+				time.Sleep(1e9)
+				break
+			}
+		}
+	}()
 
 	if err != nil {
 		log.Fatalln(err.Error())
@@ -219,6 +230,7 @@ func discoverer(ctx context.Context) {
 
 	seeds := strings.Split(seedString, ",")
 
+	var bonjours []string
 	for {
 		resolver, err := bonjour.NewResolver(nil)
 		if err != nil {
@@ -230,8 +242,8 @@ func discoverer(ctx context.Context) {
 
 		go func(results chan *bonjour.ServiceEntry) {
 			for e := range results {
-				//log.Printf(e.Instance, e.Service, e.AddrIPv4, e.Port, e.ServiceRecord, e.Text)
-				seeds = append(seeds, e.AddrIPv4.String()+":"+strconv.Itoa(e.Port))
+				log.Printf("BONJOUR", e.Instance, e.Service, e.AddrIPv4, e.Port, e.ServiceRecord, e.Text)
+				bonjours = append(bonjours, e.AddrIPv4.String()+":"+strconv.Itoa(e.Port))
 			}
 		}(results)
 
@@ -265,10 +277,21 @@ func discoverer(ctx context.Context) {
 		if len(peerIds) == 0 {
 			log.Println("discover", "seeds", seeds)
 			for _, seed := range seeds {
+				if seed == "localhost" {
+					continue
+				}
 				err := connect(ctx, seed)
 				if err != nil {
 					log.Println("seed connect err", err)
 				}
+			}
+		}
+
+		log.Println("discover", "bonjours", bonjours)
+		for _, bonjour := range bonjours {
+			err := connect(ctx, bonjour)
+			if err != nil {
+				log.Println("bonjour connect err", err)
 			}
 		}
 
