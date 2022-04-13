@@ -340,9 +340,9 @@ func discoverer(ctx context.Context) {
 
 func pruner(ctx context.Context) {
 	for {
-		ago := time.Now().UTC().Add(time.Second * -10).Unix()
-		rdb.ZRemRangeByScore(ctx, "peers", "-Inf", strconv.FormatInt(ago, 30))
-		rdb.ZRemRangeByScore(ctx, "candidates", "-Inf", strconv.FormatInt(ago, 30))
+		//ago := time.Now().UTC().Add(time.Second * -30).Unix()
+		//rdb.ZRemRangeByScore(ctx, "peers", strconv.FormatInt(ago, 10), "+Inf")
+		//rdb.ZRemRangeByScore(ctx, "candidates", strconv.FormatInt(ago, 10), "+Inf")
 		time.Sleep(1 * time.Second)
 	}
 }
@@ -446,5 +446,7 @@ func server() {
 		})
 	})
 
-	r.Run("0.0.0.0:" + port)
+	err := r.Run("0.0.0.0:" + port)
+	log.Fatalln("run err", err)
+
 }
