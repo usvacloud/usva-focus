@@ -19,8 +19,9 @@ import (
 )
 
 type Peer struct {
-	Id      string
-	Address string
+	Id        string
+	Address   string
+	Addresses []string
 }
 
 var rdb redis.Client
@@ -74,8 +75,10 @@ func connect(ctx context.Context, peerAddress string) error {
 		query = query + "&address=" + os.Getenv("USVA_ADDRESS")
 	}
 	response, err := client.PostForm("http://"+peerAddress+"/.well-known/usva-fiesta"+query, url.Values{
-		"id": {id},
+		"id":    {id},
+		"peers": peers(ctx),
 	})
+
 	if err != nil {
 		return err
 	}
@@ -99,9 +102,40 @@ func connect(ctx context.Context, peerAddress string) error {
 
 	peer.Address = peerAddress
 
+	for _, peerAddress := range peer.Addresses {
+		NewPeer(uuid.NewString(), peerAddress).Save(ctx)
+	}
 	return peer.Save(ctx)
 }
+func peers(ctx context.Context) []string {
+	peersReply := rdb.ZRangeByScore(ctx, "peers", &redis.ZRangeBy{Min: "-Inf", Max: "+Inf"})
+	if err := peersReply.Err(); err != nil {
+		log.Fatalln("err reply", err)
+	}
+	peers, err := peersReply.Result()
+	if err != nil {
+		log.Fatalln("err result", err)
+	}
+	return peers
+}
 
+func addresses(ctx context.Context) []string {
+	addresses := []string{}
+
+	for _, peerId := range peers(ctx) {
+		reply := rdb.Get(ctx, "address:"+peerId)
+		if reply.Err() != nil {
+			continue
+		}
+		address, err := reply.Result()
+		if err != nil {
+			continue
+		}
+		addresses = append(addresses, address)
+	}
+
+	return addresses
+}
 func discoverer(ctx context.Context) {
 	seedString := "fiesta.usva.io"
 	if os.Getenv("USVA_SEEDS") != "" {
@@ -193,17 +227,8 @@ func server() {
 	})
 
 	r.GET("/peers", func(c *gin.Context) {
-		peersReply := rdb.ZRangeByScore(c, "peers", &redis.ZRangeBy{Min: "-Inf", Max: "+Inf"})
-		if err := peersReply.Err(); err != nil {
-			log.Fatalln("err reply", err)
-		}
-		peers, err := peersReply.Result()
-		if err != nil {
-			log.Fatalln("err result", err)
-		}
-
 		c.JSON(http.StatusOK, gin.H{
-			"peers": peers,
+			"peers": peers(c),
 		})
 	})
 
@@ -234,6 +259,15 @@ func server() {
 
 	r.POST("/.well-known/usva-fiesta", func(c *gin.Context) {
 		peerId := c.PostForm("id")
+		peerPeerAddresses := strings.Split(c.PostForm("addresses"), ",")
+		for _, peerPeerAddress := range peerPeerAddresses {
+			peerPeer := Peer{
+				Id:      uuid.NewString(),
+				Address: peerPeerAddress,
+			}
+			peerPeer.Save(c)
+		}
+
 		peerAddress := c.ClientIP()
 		if c.Request.Header.Get("X-Original-Forwarded-For") != "" {
 			peerAddress = c.Request.Header.Get("X-Original-Forwarded-For")
@@ -254,8 +288,10 @@ func server() {
 		}
 
 		peer.Save(c)
+
 		c.JSON(http.StatusOK, gin.H{
-			"id": id,
+			"id":        id,
+			"addresses": addresses(c),
 		})
 	})
 
