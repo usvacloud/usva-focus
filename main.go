@@ -118,7 +118,7 @@ func main() {
 	rdb = *redis.NewClient(&redis.Options{})
 	rdb.FlushAll(ctx)
 
-	s, err := bonjour.Register("usvad sierra", "_usva._tcp", "", 8080, []string{"txtv=1", "app=usvad-sierra"}, nil)
+	s, err := bonjour.Register("usvad sierra "+id, "_usva._tcp", "", 8080, []string{"txtv=1", "app=usvad-sierra-" + id}, nil)
 	handler := make(chan os.Signal, 1)
 	signal.Notify(handler, os.Interrupt)
 	go func() {
@@ -130,7 +130,6 @@ func main() {
 			}
 		}
 	}()
-
 	if err != nil {
 		log.Fatalln(err.Error())
 	}
@@ -426,5 +425,9 @@ func server() {
 		})
 	})
 
-	r.Run("0.0.0.0:8080")
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+	r.Run("0.0.0.0:" + port)
 }
