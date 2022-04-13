@@ -348,6 +348,8 @@ func server() {
 		if c.Request.Header.Get("X-Forwarded-Host") != "" {
 			hostname = c.Request.Header.Get("X-Forwarded-Host")
 		}
+		// remove :80
+		hostname = strings.Split(hostname, ":")[0]
 		c.HTML(http.StatusOK, "index.tmpl", gin.H{
 			"id":       id,
 			"hostname": hostname,
