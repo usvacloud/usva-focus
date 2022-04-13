@@ -27,14 +27,18 @@ func NewCandidate(address string) Candidate {
 		Address: address,
 	}
 }
-func (p Candidate) Save(ctx context.Context) error {
+func (c Candidate) Update(ctx context.Context) error {
 	timestamp := time.Now().UTC().Unix()
-	intCmd := rdb.ZAdd(ctx, "candidates", &redis.Z{Score: float64(timestamp), Member: p.Address})
+	get := rdb.Get(ctx, "peer:by:"+c.Address)
+	if err := get.Err(); err == nil {
+		return errors.New("already exists as a peer")
+	}
 
+	intCmd := rdb.ZAdd(ctx, "candidates", &redis.Z{Score: float64(timestamp), Member: c.Address})
 	return intCmd.Err()
 }
-func (p Candidate) Delete(ctx context.Context) error {
-	intCmd := rdb.ZRem(ctx, "candidate", p.Address)
+func (c Candidate) Delete(ctx context.Context) error {
+	intCmd := rdb.ZRem(ctx, "candidates", c.Address)
 
 	return intCmd.Err()
 }
@@ -51,23 +55,46 @@ func NewPeer(id string, address string) Peer {
 		Address: address,
 	}
 }
-func (p Peer) Save(ctx context.Context) error {
+func (p Peer) Update(ctx context.Context) error {
 	timestamp := time.Now().UTC().Unix()
 
-	setEx := rdb.SetEX(ctx, "address:"+p.Id, p.Address, time.Second*30)
-	if setEx.Err() != nil {
-		log.Println("Peer", p.Id, "Save", "address:"+p.Id, "error", setEx.Err())
+	setExAddress := rdb.SetEX(ctx, "address:by:"+p.Id, p.Address, time.Second*30)
+	if setExAddress.Err() != nil {
+		log.Fatalln("Peer", p.Id, "Update", "address:by:"+p.Id, "error", setExAddress.Err())
 	}
-	zAdd := rdb.ZAdd(ctx, "peers", &redis.Z{Score: float64(timestamp), Member: p.Id})
+	setExPeer := rdb.SetEX(ctx, "peer:by:"+p.Address, p.Id, time.Second*30)
+	if setExPeer.Err() != nil {
+		log.Fatalln("Peer", p.Id, "Update", "peer:by:"+p.Address, "error", setExPeer.Err())
+	}
 
-	return zAdd.Err()
-}
-func (p Peer) Delete(ctx context.Context) error {
-	delAddress := rdb.Del(ctx, "address:"+p.Id)
-	if delAddress.Err() != nil {
-		// ignore, can be deleted by expiry
-		log.Println("Peer", p.Id, "Delete", "address:"+p.Id, "error", delAddress.Err())
+	zAdd := rdb.ZAdd(ctx, "peers", &redis.Z{Score: float64(timestamp), Member: p.Id})
+	if zAdd.Err() != nil {
+		log.Fatalln("Peer", p.Id, "Update", "zadd", "error", zAdd.Err())
 	}
+
+	err := Candidate{
+		Address: p.Address,
+	}.Delete(ctx)
+	if err != nil {
+		// ignore, can be deleted by expiry
+		log.Println("Peer", p.Id, "Update", "candidate", "delete error", err)
+	}
+
+	return nil
+}
+
+func (p Peer) Delete(ctx context.Context) error {
+	delAddressBy := rdb.Del(ctx, "address:by:"+p.Id)
+	if delAddressBy.Err() != nil {
+		// ignore, can be deleted by expiry
+		log.Println("Peer", p.Id, "Delete", "address:by:"+p.Id, "error", delAddressBy.Err())
+	}
+	delPeerBy := rdb.Del(ctx, "peer:by:"+p.Id)
+	if delPeerBy.Err() != nil {
+		// ignore, can be deleted by expiry
+		log.Println("Peer", p.Id, "Delete", "peer:by:"+p.Id, "error", delPeerBy.Err())
+	}
+
 	zRem := rdb.ZRem(ctx, "peers", p.Id)
 	if zRem.Err() != nil {
 		// ignore, can be deleted by pruner
@@ -87,10 +114,12 @@ func main() {
 	log.Println("USVA GALANT ", id)
 
 	rdb = *redis.NewClient(&redis.Options{})
+	rdb.FlushAll(ctx)
 
+	go server()
+	time.Sleep(1 * time.Second)
 	go discoverer(ctx)
 	go pruner(ctx)
-	go server()
 
 	<-ctx.Done()
 }
@@ -104,6 +133,7 @@ func connect(ctx context.Context, peerAddress string) error {
 	if os.Getenv("USVA_ADDRESS") != "" {
 		query = query + "&address=" + os.Getenv("USVA_ADDRESS")
 	}
+
 	response, err := client.PostForm("http://"+peerAddress+"/.well-known/usva-galant"+query, url.Values{
 		"id": {id},
 	})
@@ -128,16 +158,26 @@ func connect(ctx context.Context, peerAddress string) error {
 
 	peer.Address = peerAddress
 
-	for _, peerAddress := range peer.Candidates {
+	for _, candidateAddress := range peer.Candidates {
 		err := Candidate{
-			Address: peerAddress,
-		}.Save(ctx)
+			Address: candidateAddress,
+		}.Update(ctx)
 
 		if err != nil {
-			log.Println("connect", "candidate", peerAddress, "save error", err)
+			log.Println("connect", "candidate", candidateAddress, "save error", err)
+		} else {
+			log.Println("connect", "candidate", candidateAddress, "save ok")
 		}
 	}
-	return peer.Save(ctx)
+
+	err = peer.Update(ctx)
+	if err != nil {
+		log.Println("connect", "peer", peer.Id, peer.Address, "save error", err)
+	} else {
+		log.Println("connect", "peer", peer.Id, peer.Address, "save ok")
+	}
+
+	return nil
 }
 func peers(ctx context.Context) []string {
 	zRangeByScore := rdb.ZRangeByScore(ctx, "peers", &redis.ZRangeBy{Min: "-Inf", Max: "+Inf"})
@@ -173,19 +213,29 @@ func discoverer(ctx context.Context) {
 
 	for {
 		for _, address := range candidates(ctx) {
-			Candidate := Candidate{
-				Address: address,
+			get := rdb.Get(ctx, "peer:by:"+address)
+			if err := get.Err(); err == nil {
+				// already a peer
+				log.Fatalln("candidate", address, "already a peer")
 			}
-			err := connect(ctx, Candidate.Address)
+
+			log.Println("candidate", "connect", address)
+			err := connect(ctx, address)
 			if err != nil {
 				log.Println("candidate connect error", err)
-				Candidate.Delete(ctx)
-				continue
 			}
+			// // always delete candidate, it will come again
+			// if err := candidate.Delete(ctx); err != nil {
+			// 	log.Println("candidate", "delete", "error", err)
+			// } else {
+			// 	log.Println("candidate", "delete", "ok", candidate.Address)
+			// }
 		}
 
 		peerIds := peers(ctx)
+		log.Println("discover", "peerIds", peerIds)
 		if len(peerIds) == 0 {
+			log.Println("discover", "seeds", seeds)
 			for _, seed := range seeds {
 				err := connect(ctx, seed)
 				if err != nil {
@@ -194,22 +244,25 @@ func discoverer(ctx context.Context) {
 			}
 		}
 
+		log.Println("discover", "peerIds", peerIds)
 		for _, peerId := range peerIds {
-			get := rdb.Get(ctx, "address:"+peerId)
+			get := rdb.Get(ctx, "address:by:"+peerId)
 			if err := get.Err(); err != nil {
-				log.Println("get address err", peerId, err)
+				log.Println("peer", "address:by:"+peerId, "err", err)
 				continue
 			}
 			address, err := get.Result()
 			if err != nil {
-				log.Println("get address result err", err)
+				log.Println("peer", "address:by:"+peerId, "result", err)
 				continue
 			}
+			log.Println("peer", "connecting", address)
 			err = connect(ctx, address)
 			if err != nil {
-				log.Println("peer connect error", err)
+				log.Println("peer", "connect", address, "error", err)
 				continue
 			}
+			log.Println("peer", "saved", address)
 		}
 
 		time.Sleep(time.Second * 5)
@@ -245,12 +298,14 @@ func server() {
 	r.GET("/app/peers", func(c *gin.Context) {
 		c.HTML(http.StatusOK, "peers.tmpl", gin.H{})
 	})
-
 	r.GET("/app/peer/:id", func(c *gin.Context) {
 		peerId := c.Param("id")
 		c.HTML(http.StatusOK, "peer.tmpl", gin.H{
 			"id": peerId,
 		})
+	})
+	r.GET("/app/candidates", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "candidates.tmpl", gin.H{})
 	})
 
 	r.GET("/peers", func(c *gin.Context) {
@@ -258,10 +313,15 @@ func server() {
 			"peers": peers(c),
 		})
 	})
+	r.GET("/candidates", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{
+			"candidates": candidates(c),
+		})
+	})
 
 	r.GET("/peer/:id", func(c *gin.Context) {
 		peerId := c.Param("id")
-		address, errAddress := rdb.Get(c, "address:"+peerId).Result()
+		address, errAddress := rdb.Get(c, "address:by:"+peerId).Result()
 		since, errScore := rdb.ZScore(c, "peers", peerId).Result()
 
 		if errAddress != nil || errScore != nil {
@@ -299,9 +359,15 @@ func server() {
 			peerAddress = c.Query("address")
 		}
 
-		Candidate{
+		err := Candidate{
 			Address: peerAddress,
-		}.Save(c)
+		}.Update(c)
+		if err != nil {
+			log.Println("/.well-known", "Candidate", "Save", "error", err)
+		} else {
+			log.Println("/.well-known", "Candidate", "Save", "ok", peerAddress)
+
+		}
 
 		c.JSON(http.StatusOK, gin.H{
 			"id":         id,
