@@ -120,7 +120,7 @@ func main() {
 	rdb = *redis.NewClient(&redis.Options{})
 	rdb.FlushAll(ctx)
 
-	port := os.Getenv("PORT")
+	port = os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
 	}
