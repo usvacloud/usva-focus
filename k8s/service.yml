@@ -2,10 +2,10 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: usvad-galant
+  name: usvad-sierra
 spec:
   selector:
-    app: usvad-galant
+    app: usvad-sierra
   ports:
     - port: 80
       targetPort: 8080

@@ -111,7 +111,7 @@ func main() {
 	defer cancel()
 
 	id = uuid.New().String()
-	log.Println("USVA GALANT ", id)
+	log.Println("USVA sierra ", id)
 
 	rdb = *redis.NewClient(&redis.Options{})
 	rdb.FlushAll(ctx)
@@ -134,7 +134,7 @@ func connect(ctx context.Context, peerAddress string) error {
 		query = query + "&address=" + os.Getenv("USVA_ADDRESS")
 	}
 
-	response, err := client.PostForm("http://"+peerAddress+"/.well-known/usva-galant"+query, url.Values{
+	response, err := client.PostForm("http://"+peerAddress+"/.well-known/usva-sierra"+query, url.Values{
 		"id": {id},
 	})
 
@@ -204,7 +204,7 @@ func candidates(ctx context.Context) []string {
 }
 
 func discoverer(ctx context.Context) {
-	seedString := "galant.usva.io"
+	seedString := "sierra.usva.io"
 	if os.Getenv("USVA_SEEDS") != "" {
 		seedString = os.Getenv("USVA_SEEDS")
 	}
@@ -344,7 +344,7 @@ func server() {
 		})
 	})
 
-	r.POST("/.well-known/usva-galant", func(c *gin.Context) {
+	r.POST("/.well-known/usva-sierra", func(c *gin.Context) {
 		peerId := c.PostForm("id")
 		if peerId == id {
 			c.JSON(http.StatusTeapot, gin.H{})

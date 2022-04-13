@@ -21,5 +21,7 @@ case $1 in
   ;;
   release)
     docker buildx bake --push usvad
+    kubectl get namespace usvad-sierra || kubectl create namespace usvad-sierra
+    kubectl apply -n usvad-sierra -f k8s
   ;;
 esac

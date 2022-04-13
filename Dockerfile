@@ -14,6 +14,6 @@ WORKDIR /app
 COPY --from=builder /build/main ./usvad
 COPY views views/
 COPY entrypoint.sh .
-ENV USVA_SEEDS=galant.usva.io
+ENV USVA_SEEDS=sierra.usva.io
 ENV GIN_MODE=release
 ENTRYPOINT [ "/app/entrypoint.sh" ]

@@ -16,19 +16,19 @@ services:
     volumes:
       - ./:/app
     environment:
-      - VIRTUAL_HOST=galant.localtest.me
-      - USVA_SEEDS=galant.localtest.me
+      - VIRTUAL_HOST=sierra.localtest.me
+      - USVA_SEEDS=localhost
     networks:
       - frontend
     extra_hosts:
-      - galant.localtest.me:192.168.65.2
+      - sierra.localtest.me:192.168.65.2
 
   usvad:
     build:
       context: .
       x-bake:
         tags:
-          - mattipaksula/usvad-galant
+          - mattipaksula/usvad-sierra
         platforms:
           - linux/amd64
           - linux/arm64

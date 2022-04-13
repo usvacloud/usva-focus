@@ -2,19 +2,19 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: usvad-galant
+  name: usvad-sierra
 spec:
   selector:
     matchLabels:
-      app: usvad-galant
+      app: usvad-sierra
   template:
     metadata:
       labels:
-        app: usvad-galant
+        app: usvad-sierra
     spec:
       containers:
-        - name: usvad-galant
-          image: mattipaksula/usvad-galant
+        - name: usvad-sierra
+          image: mattipaksula/usvad-sierra
           imagePullPolicy: Always
           resources:
             requests:
@@ -25,4 +25,4 @@ spec:
               memory: 128Mi
           env:
             - name: USVA_ADDRESS
-              value: galant.usva.io
+              value: sierra.usva.io
