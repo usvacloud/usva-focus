@@ -231,6 +231,11 @@ func server() {
 			"peers": peers(c),
 		})
 	})
+	r.GET("/addresses", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{
+			"addresses": addresses(c),
+		})
+	})
 
 	r.GET("/peer/:id", func(c *gin.Context) {
 		peerId := c.Param("id")
