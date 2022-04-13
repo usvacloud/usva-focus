@@ -16,19 +16,19 @@ services:
     volumes:
       - ./:/app
     environment:
-      - VIRTUAL_HOST=fiesta.localtest.me
-      - USVA_SEEDS=fiesta.localtest.me
+      - VIRTUAL_HOST=galant.localtest.me
+      - USVA_SEEDS=galant.localtest.me
     networks:
       - frontend
     extra_hosts:
-      - fiesta.localtest.me:192.168.65.2
+      - galant.localtest.me:192.168.65.2
 
   usvad:
     build:
       context: .
       x-bake:
         tags:
-          - mattipaksula/usvad-fiesta
+          - mattipaksula/usvad-galant
         platforms:
           - linux/amd64
           - linux/arm64

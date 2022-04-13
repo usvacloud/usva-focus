@@ -32,7 +32,7 @@ func main() {
 	defer cancel()
 
 	id = uuid.New().String()
-	log.Println("USVA FIESTA ", id)
+	log.Println("USVA GALANT ", id)
 	rdb = *redis.NewClient(&redis.Options{})
 
 	go discoverer(ctx)
@@ -74,7 +74,7 @@ func connect(ctx context.Context, peerAddress string) error {
 	if os.Getenv("USVA_ADDRESS") != "" {
 		query = query + "&address=" + os.Getenv("USVA_ADDRESS")
 	}
-	response, err := client.PostForm("http://"+peerAddress+"/.well-known/usva-fiesta"+query, url.Values{
+	response, err := client.PostForm("http://"+peerAddress+"/.well-known/usva-galant"+query, url.Values{
 		"id":    {id},
 		"peers": peers(ctx),
 	})
@@ -137,7 +137,7 @@ func addresses(ctx context.Context) []string {
 	return addresses
 }
 func discoverer(ctx context.Context) {
-	seedString := "fiesta.usva.io"
+	seedString := "galant.usva.io"
 	if os.Getenv("USVA_SEEDS") != "" {
 		seedString = os.Getenv("USVA_SEEDS")
 	}
@@ -262,7 +262,7 @@ func server() {
 		})
 	})
 
-	r.POST("/.well-known/usva-fiesta", func(c *gin.Context) {
+	r.POST("/.well-known/usva-galant", func(c *gin.Context) {
 		peerId := c.PostForm("id")
 		peerPeerAddresses := strings.Split(c.PostForm("addresses"), ",")
 		for _, peerPeerAddress := range peerPeerAddresses {

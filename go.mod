@@ -1,6 +1,6 @@
 go 1.17
 
-module github.com/usvacloud/usvad-fiesta
+module github.com/usvacloud/usvad-galant
 
 require (
 	github.com/gin-gonic/gin v1.7.7

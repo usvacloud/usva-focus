@@ -2,10 +2,10 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: usvad-fiesta
+  name: usvad-galant
 spec:
   selector:
-    app: usvad-fiesta
+    app: usvad-galant
   ports:
     - port: 80
       targetPort: 8080

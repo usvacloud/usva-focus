@@ -2,19 +2,19 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: usvad-fiesta
+  name: usvad-galant
 spec:
   selector:
     matchLabels:
-      app: usvad-fiesta
+      app: usvad-galant
   template:
     metadata:
       labels:
-        app: usvad-fiesta
+        app: usvad-galant
     spec:
       containers:
-        - name: usvad-fiesta
-          image: mattipaksula/usvad-fiesta
+        - name: usvad-galant
+          image: mattipaksula/usvad-galant
           imagePullPolicy: Always
           resources:
             requests:
@@ -25,4 +25,4 @@ spec:
               memory: 128Mi
           env:
             - name: USVA_ADDRESS
-              value: fiesta.usva.io
+              value: galant.usva.io

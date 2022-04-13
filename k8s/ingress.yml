@@ -2,17 +2,17 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: usvad-fiesta
+  name: usvad-galant
 spec:
   ingressClassName: nginx
   rules:
-    - host: fiesta.usva.io
+    - host: galant.usva.io
       http:
         paths:
           - path: /
             pathType: Prefix
             backend:
               service:
-                name: usvad-fiesta
+                name: usvad-galant
                 port:
                   number: 80

@@ -1,14 +1,14 @@
-# usvad-fiesta
+# usvad-galant
 
 ```
-docker run -p 80:8080 mattipaksula/usvad-fiesta
+docker run -p 80:8080 mattipaksula/usvad-galant
 ```
 
 ## oneliner to update and leave running
 
 ```shell
-docker pull mattipaksula/usvad-fiesta \
-&& docker rm -f usvad-fiesta \
-&& docker run -d --name usvad-fiesta --rm -p 80:8080 mattipaksula/usvad-fiesta \
-&& docker logs -f usvad-fiesta
+docker pull mattipaksula/usvad-galant \
+&& docker rm -f usvad-galant \
+&& docker run -d --name usvad-galant --rm -p 80:8080 mattipaksula/usvad-galant \
+&& docker logs -f usvad-galant
 ```
