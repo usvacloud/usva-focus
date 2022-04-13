@@ -109,12 +109,16 @@ var rdb redis.Client
 var id string
 
 var port string
+var teapots map[string]bool
 
 func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
 	id = uuid.New().String()
+
+	teapots = make(map[string]bool)
+
 	log.Println("USVA sierra ", id)
 
 	rdb = *redis.NewClient(&redis.Options{})
@@ -152,6 +156,11 @@ func main() {
 }
 
 func connect(ctx context.Context, peerAddress string) error {
+	if teapots[peerAddress] {
+		log.Println("would be a teapot", peerAddress)
+		return nil
+	}
+
 	client := http.Client{
 		Timeout: 3 * time.Second,
 	}
@@ -171,6 +180,7 @@ func connect(ctx context.Context, peerAddress string) error {
 	defer response.Body.Close()
 
 	if response.StatusCode == http.StatusTeapot {
+		teapots[peerAddress] = true
 		return errors.New("teapot")
 	}
 	if response.StatusCode != http.StatusOK {
@@ -238,7 +248,7 @@ func discoverer(ctx context.Context) {
 
 	seeds := strings.Split(seedString, ",")
 
-	var bonjours []string
+	var bonjours = make(map[string]bool)
 	for {
 		resolver, err := bonjour.NewResolver(nil)
 		if err != nil {
@@ -251,7 +261,7 @@ func discoverer(ctx context.Context) {
 		go func(results chan *bonjour.ServiceEntry) {
 			for e := range results {
 				log.Printf("BONJOUR", e.Instance, e.Service, e.AddrIPv4, e.Port, e.ServiceRecord, e.Text)
-				bonjours = append(bonjours, e.AddrIPv4.String()+":"+strconv.Itoa(e.Port))
+				bonjours[e.AddrIPv4.String()] = true
 			}
 		}(results)
 
@@ -296,8 +306,8 @@ func discoverer(ctx context.Context) {
 		}
 
 		log.Println("discover", "bonjours", bonjours)
-		for _, bonjour := range bonjours {
-			err := connect(ctx, bonjour)
+		for key := range bonjours {
+			err := connect(ctx, key)
 			if err != nil {
 				log.Println("bonjour connect err", err)
 			}
