@@ -10,6 +10,7 @@ import (
 	"os/signal"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/gin-contrib/location"
@@ -157,7 +158,7 @@ func main() {
 
 func connect(ctx context.Context, peerAddress string) error {
 	if teapots[peerAddress] {
-		log.Println("would be a teapot", peerAddress)
+		//log.Println("would be a teapot", peerAddress)
 		return nil
 	}
 
@@ -248,6 +249,7 @@ func discoverer(ctx context.Context) {
 
 	seeds := strings.Split(seedString, ",")
 
+	var bonjourLock = sync.Mutex{}
 	var bonjours = make(map[string]bool)
 	for {
 		resolver, err := bonjour.NewResolver(nil)
@@ -261,7 +263,9 @@ func discoverer(ctx context.Context) {
 		go func(results chan *bonjour.ServiceEntry) {
 			for e := range results {
 				log.Printf("BONJOUR", e.Instance, e.Service, e.AddrIPv4, e.Port, e.ServiceRecord, e.Text)
+				bonjourLock.Lock()
 				bonjours[e.AddrIPv4.String()] = true
+				bonjourLock.Unlock()
 			}
 		}(results)
 
@@ -310,6 +314,9 @@ func discoverer(ctx context.Context) {
 			err := connect(ctx, key)
 			if err != nil {
 				log.Println("bonjour connect err", err)
+				bonjourLock.Lock()
+				delete(bonjours, key)
+				bonjourLock.Unlock()
 			}
 		}
 
@@ -340,9 +347,9 @@ func discoverer(ctx context.Context) {
 
 func pruner(ctx context.Context) {
 	for {
-		//ago := time.Now().UTC().Add(time.Second * -30).Unix()
-		//rdb.ZRemRangeByScore(ctx, "peers", strconv.FormatInt(ago, 10), "+Inf")
-		//rdb.ZRemRangeByScore(ctx, "candidates", strconv.FormatInt(ago, 10), "+Inf")
+		ago := time.Now().UTC().Unix() - int64(10)
+		rdb.ZRemRangeByScore(ctx, "peers", "-inf", strconv.FormatInt(ago, 10))
+		rdb.ZRemRangeByScore(ctx, "candidates", "-inf", strconv.FormatInt(ago, 10))
 		time.Sleep(1 * time.Second)
 	}
 }
