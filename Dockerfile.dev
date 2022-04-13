@@ -11,5 +11,4 @@ RUN go mod tidy
 
 COPY . .
 EXPOSE 8080
-ENV GIN_MODE=release
 ENTRYPOINT [ "/app/entrypoint-dev.sh" ]
