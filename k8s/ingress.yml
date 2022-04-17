@@ -2,17 +2,17 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: usvad-sierra
+  name: usvad-focus
 spec:
   ingressClassName: nginx
   rules:
-    - host: sierra.usva.io
+    - host: focus.usva.io
       http:
         paths:
           - path: /
             pathType: Prefix
             backend:
               service:
-                name: usvad-sierra
+                name: usvad-focus
                 port:
                   number: 80

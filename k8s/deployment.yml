@@ -2,19 +2,19 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: usvad-sierra
+  name: usvad-focus
 spec:
   selector:
     matchLabels:
-      app: usvad-sierra
+      app: usvad-focus
   template:
     metadata:
       labels:
-        app: usvad-sierra
+        app: usvad-focus
     spec:
       containers:
-        - name: usvad-sierra
-          image: mattipaksula/usvad-sierra
+        - name: usvad-focus
+          image: mattipaksula/usvad-focus
           imagePullPolicy: Always
           resources:
             requests:
@@ -25,4 +25,4 @@ spec:
               memory: 128Mi
           env:
             - name: USVA_ADDRESS
-              value: sierra.usva.io
+              value: focus.usva.io

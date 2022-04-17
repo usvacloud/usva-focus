@@ -120,7 +120,7 @@ func main() {
 
 	teapots = make(map[string]bool)
 
-	log.Println("USVA sierra ", id)
+	log.Println("USVA focus ", id)
 
 	rdb = *redis.NewClient(&redis.Options{})
 	rdb.FlushAll(ctx)
@@ -132,7 +132,7 @@ func main() {
 
 	portInt, _ := strconv.Atoi(port)
 
-	s, err := bonjour.Register("usvad sierra "+id, "_usva._tcp", "", portInt, []string{"txtv=1", "app=usvad-sierra-" + id}, nil)
+	s, err := bonjour.Register("usvad focus "+id, "_usva._tcp", "", portInt, []string{"txtv=1", "app=usvad-focus-" + id}, nil)
 	handler := make(chan os.Signal, 1)
 	signal.Notify(handler, os.Interrupt)
 	go func() {
@@ -171,7 +171,7 @@ func connect(ctx context.Context, peerAddress string) error {
 		query = query + "&address=" + os.Getenv("USVA_ADDRESS")
 	}
 
-	response, err := client.PostForm("http://"+peerAddress+"/.well-known/usva-sierra"+query, url.Values{
+	response, err := client.PostForm("http://"+peerAddress+"/.well-known/usva-focus"+query, url.Values{
 		"id": {id},
 	})
 
@@ -242,7 +242,7 @@ func candidates(ctx context.Context) []string {
 }
 
 func discoverer(ctx context.Context) {
-	seedString := "sierra.usva.io"
+	seedString := "focus.usva.io"
 	if os.Getenv("USVA_SEEDS") != "" {
 		seedString = os.Getenv("USVA_SEEDS")
 	}
@@ -422,7 +422,7 @@ func server() {
 		})
 	})
 
-	r.POST("/.well-known/usva-sierra", func(c *gin.Context) {
+	r.POST("/.well-known/usva-focus", func(c *gin.Context) {
 		peerId := c.PostForm("id")
 		if peerId == id {
 			c.JSON(http.StatusTeapot, gin.H{})

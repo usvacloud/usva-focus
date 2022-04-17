@@ -16,19 +16,19 @@ services:
     volumes:
       - ./:/app
     environment:
-      - VIRTUAL_HOST=sierra.localtest.me
+      - VIRTUAL_HOST=focus.localtest.me
       - USVA_SEEDS=localhost
     networks:
       - frontend
     extra_hosts:
-      - sierra.localtest.me:192.168.65.2
+      - focus.localtest.me:192.168.65.2
 
   usvad:
     build:
       context: .
       x-bake:
         tags:
-          - mattipaksula/usvad-sierra
+          - mattipaksula/usvad-focus
         platforms:
           - linux/amd64
           - linux/arm64
