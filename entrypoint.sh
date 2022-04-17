@@ -10,6 +10,6 @@ while true; do
   echo "waiting for redis"
   sleep 0.1
 done
-echo "redis ok, starting usva"
+echo "redis ok, starting usva daemon"
 
-exec /app/usvad
+exec /app/usva daemon

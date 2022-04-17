@@ -1,14 +1,14 @@
-# usvad-focus
+# usva-focus
 
 ```
-docker run -p 80:8080 mattipaksula/usvad-focus
+docker run -p 80:8080 mattipaksula/usva-focus daemon
 ```
 
 ## oneliner to update and leave running
 
 ```shell
-docker pull mattipaksula/usvad-focus \
-&& docker rm -f usvad-focus \
-&& docker run -d --name usvad-focus --rm -p 80:8080 mattipaksula/usvad-focus \
-&& docker logs -f usvad-focus
+docker pull mattipaksula/usva-focus \
+&& docker rm -f usva-focus \
+&& docker run -d --name usva-focus --rm -p 80:8080 mattipaksula/usva-focus daemon \
+&& docker logs -f usva-focus
 ```

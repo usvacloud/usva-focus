@@ -9,7 +9,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     networks:
       - frontend
-  usvadev:
+  usvad:
     build:
       context: .
       dockerfile: Dockerfile.dev
@@ -23,12 +23,12 @@ services:
     extra_hosts:
       - focus.localtest.me:192.168.65.2
 
-  usvad:
+  usva:
     build:
       context: .
       x-bake:
         tags:
-          - mattipaksula/usvad-focus
+          - mattipaksula/usva-focus
         platforms:
           - linux/amd64
           - linux/arm64

@@ -11,7 +11,7 @@ RUN apk add --no-cache \
   bash redis
 
 WORKDIR /app
-COPY --from=builder /build/main ./usvad
+COPY --from=builder /build/main ./usva
 COPY views views/
 COPY entrypoint.sh .
 ENV USVA_SEEDS=focus.usva.io

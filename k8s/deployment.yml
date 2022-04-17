@@ -2,19 +2,19 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: usvad-focus
+  name: usva-focus
 spec:
   selector:
     matchLabels:
-      app: usvad-focus
+      app: usva-focus
   template:
     metadata:
       labels:
-        app: usvad-focus
+        app: usva-focus
     spec:
       containers:
-        - name: usvad-focus
-          image: mattipaksula/usvad-focus
+        - name: usva-focus
+          image: mattipaksula/usva-focus
           imagePullPolicy: Always
           resources:
             requests:

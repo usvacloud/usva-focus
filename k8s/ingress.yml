@@ -2,7 +2,7 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: usvad-focus
+  name: usva-focus
 spec:
   ingressClassName: nginx
   rules:
@@ -13,6 +13,6 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: usvad-focus
+                name: usva-focus
                 port:
                   number: 80

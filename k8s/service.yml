@@ -2,10 +2,10 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: usvad-focus
+  name: usva-focus
 spec:
   selector:
-    app: usvad-focus
+    app: usva-focus
   ports:
     - port: 80
       targetPort: 8080

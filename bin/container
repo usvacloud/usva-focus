@@ -7,7 +7,7 @@ case $1 in
     docker-compose up -d nginx-proxy
 
     while true; do
-      docker-compose up --build --force-recreate --timeout 0 usvadev || true
+      docker-compose up --build --force-recreate --timeout 0 usvad || true
       sleep 0.5
     done
   ;;
@@ -17,11 +17,11 @@ case $1 in
     done
   ;;
   scale)
-    docker-compose up -d --scale usvadev=$2 usvadev
+    docker-compose up -d --scale usvad=$2 usvad
   ;;
   release)
-    docker buildx bake --push usvad
-    kubectl get namespace usvad-focus || kubectl create namespace usvad-focus
-    kubectl apply -n usvad-focus -f k8s
+    docker buildx bake --push usva
+    kubectl get namespace usva-focus || kubectl create namespace usva-focus
+    kubectl apply -n usva-focus -f k8s
   ;;
 esac
