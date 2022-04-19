@@ -1,0 +1,31 @@
+{{ define "app/peers" }}
+<h2>peers</h2>
+
+<ul id="peers"></ul>
+<script>
+  let update = () => {
+    fetch("/api/peers")
+      .then(setTimeout(update, 3000))
+      .then(response => response.json())
+      .then(data => {
+        peers.textContent = ""
+        if (!data.peers) {
+          return
+        }
+        data.peers.forEach(peer => {
+          let a = document.createElement("a")
+          a.href = "/app/peer?id="+peer
+          a.textContent = peer
+          a.target = "main"
+
+          let li = document.createElement("li")
+          li.appendChild(a)
+          peers.appendChild(li)
+        })
+      })
+
+  }
+
+  update()
+</script>
+{{ end }}

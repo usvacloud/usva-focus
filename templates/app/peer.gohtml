@@ -1,0 +1,30 @@
+{{ define "app/peer" }}
+<h2>peer</h2>
+
+<span>since:</span> <span id="since"></span><br>
+<span>address:</span> <span id="address"></span>
+<script>
+  let update = () => {
+    fetch("/api/peer?id={{ .id }}")
+      .then(setTimeout(update, 3000))
+      .then(response => response.json())
+      .then(data => {
+        if (!data.peer) {
+          address.textContent = "disappeared"
+          return
+        }
+        since.textContent = data.since
+
+        let a = document.createElement("a")
+        a.href = data.peer
+        a.textContent = data.peer
+        a.target = "_blank"
+
+        address.innerHTML = ''
+        address.appendChild(a)
+      })
+  }
+
+  update()
+</script>
+{{ end }}

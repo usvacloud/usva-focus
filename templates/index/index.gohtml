@@ -1,0 +1,34 @@
+{{ define "index" }}
+<script>
+  let update = () => {
+    fetch("/.well-known/usva")
+      .catch(() => {
+        document.body.style.backgroundColor="red";
+        setTimeout(update, 3000)
+      })
+      .then((response) => {
+        if (response.ok) {
+          document.body.style.backgroundColor="white";
+        } else {
+          document.body.style.backgroundColor="pink";
+        }
+      })
+      .then(setTimeout(update, 3000))
+  }
+  update()
+</script>
+<h1>usva focus</h1>
+
+<h2>{{ .hostname }} {{ .id }}</h2>
+
+<iframe src="/app/candidates" width="25%" height="33%"></iframe>
+<iframe src="/app/peers" width="25%" height="33%"></iframe>
+
+<iframe src="about:blank" name="main" width="25%" height="33%"></iframe>
+
+
+<pre>
+  docker run -p 80:8080 mattipaksula/usva-focus
+</pre>
+
+ {{ end }}

@@ -288,7 +288,6 @@ func discoverer(ctx context.Context) {
 		for _, address := range candidates(ctx) {
 			get := rdb.Get(ctx, "peer:by:"+address)
 			if err := get.Err(); err == nil {
-				// already a peer
 				log.Fatalln("candidate", address, "already a peer")
 			}
 
@@ -356,14 +355,6 @@ func discoverer(ctx context.Context) {
 	}
 }
 
-func pruner(ctx context.Context) {
-	for {
-		ago := time.Now().UTC().Unix() - int64(10)
-		rdb.ZRemRangeByScore(ctx, "peers", "-inf", strconv.FormatInt(ago, 10))
-		rdb.ZRemRangeByScore(ctx, "candidates", "-inf", strconv.FormatInt(ago, 10))
-		time.Sleep(1 * time.Second)
-	}
-}
 
 func server() {
 	r := gin.Default()
@@ -432,39 +423,4 @@ func server() {
 			"headers":  c.Request.Header,
 		})
 	})
-
-	r.POST("/.well-known/usva-focus", func(c *gin.Context) {
-		peerId := c.PostForm("id")
-		if peerId == id {
-			c.JSON(http.StatusTeapot, gin.H{})
-			return
-		}
-
-		peerAddress := c.ClientIP()
-		if c.Request.Header.Get("X-Original-Forwarded-For") != "" {
-			peerAddress = c.Request.Header.Get("X-Original-Forwarded-For")
-		}
-		if c.Query("address") != "" {
-			peerAddress = c.Query("address")
-		}
-
-		err := Candidate{
-			Address: peerAddress,
-		}.Update(c)
-		if err != nil {
-			log.Println("/.well-known", "Candidate", "Save", "error", err)
-		} else {
-			log.Println("/.well-known", "Candidate", "Save", "ok", peerAddress)
-
-		}
-
-		c.JSON(http.StatusOK, gin.H{
-			"id":         id,
-			"candidates": candidates(c),
-		})
-	})
-
-	err := r.Run("0.0.0.0:" + port)
-	log.Fatalln("run err", err)
-
 }

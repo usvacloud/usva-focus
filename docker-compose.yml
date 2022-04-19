@@ -17,12 +17,21 @@ services:
       - ./:/app
     environment:
       - VIRTUAL_HOST=focus.localtest.me
-      - USVA_SEEDS=localhost
+      - PORT=8080
     networks:
       - frontend
     extra_hosts:
       - focus.localtest.me:192.168.65.2
-
+  usvas:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    volumes:
+      - ./:/app
+    networks:
+      - frontend
+    extra_hosts:
+      - focus.localtest.me:192.168.65.2
   usva:
     build:
       context: .

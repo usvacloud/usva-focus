@@ -17,7 +17,8 @@ case $1 in
     done
   ;;
   scale)
-    docker-compose up -d --scale usvad=$2 usvad
+    docker-compose up -d --scale usvas=$2 usvas
+    docker-compose logs -f usvas
   ;;
   release)
     docker buildx bake --push usva

@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+amount=$1
+
+go build -o /tmp/usva cmd/usva/usva.go
+
+#PORT=9999 /tmp/usva daemon &
+
+for ((i=0; i<amount; i++)); do
+  (
+    exec /tmp/usva daemon
+  ) 2>&1 | sed -le "s#^#usva $i: #;" &
+done
+
+wait

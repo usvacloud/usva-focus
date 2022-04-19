@@ -1,0 +1,27 @@
+{{ define "app/candidates" }}
+<h2>candidates</h2>
+
+<ul id="candidates"></ul>
+<script>
+  let update = () => {
+    fetch("/api/candidates")
+      .then(setTimeout(update, 3000))
+      .then(response => response.json())
+      .then(data => {
+        candidates.textContent = ""
+        if (!data.candidates) {
+          return
+        }
+        data.candidates.forEach(candidate => {
+          let li = document.createElement("li")
+          li.textContent = candidate
+          li.appendChi
+          candidates.appendChild(li)
+        })
+      })
+
+  }
+
+  update()
+</script>
+{{ end }}
